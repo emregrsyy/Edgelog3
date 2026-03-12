@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>EdgeLog</title>
+<title>EdgeLog v2.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -117,7 +117,7 @@ textarea.fi{height:60px;resize:vertical}
   <div class="header-inner">
     <div class="logo">
       <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><path d="M2 12L6 8L9 11L14 4" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <span class="logo-e">EDGE</span><span class="logo-l">LOG</span><span class="logo-v">v2</span>
+      <span class="logo-e">EDGE</span><span class="logo-l">LOG</span><span class="logo-v">v2.1</span>
     </div>
     <div><div class="hpnl-label">TOPLAM P&L</div><div class="hpnl-val" id="hpnl">+0 ₺</div></div>
   </div>
@@ -131,7 +131,6 @@ textarea.fi{height:60px;resize:vertical}
   </nav>
 </div>
 
-<!-- DASHBOARD -->
 <div class="page active content" id="page-dashboard">
   <div class="g4" id="dStats" style="margin-bottom:14px"></div>
   <div class="sec">
@@ -145,7 +144,6 @@ textarea.fi{height:60px;resize:vertical}
   <div class="sec"><div class="sec-hd"><div class="sec-title">Son İşlemler</div><button class="btn btn-s btn-sm" onclick="go('journal')">Tümü →</button></div><div id="dTrades"></div></div>
 </div>
 
-<!-- JOURNAL -->
 <div class="page content" id="page-journal">
   <div class="topbar">
     <div><div class="ptitle">Journal</div><div class="psub" id="jCount">0 KAYIT</div></div>
@@ -180,7 +178,6 @@ textarea.fi{height:60px;resize:vertical}
   <div id="jList"></div>
 </div>
 
-<!-- WATCHLIST -->
 <div class="page content" id="page-watchlist">
   <div class="topbar">
     <div><div class="ptitle">Watchlist</div><div class="psub" id="wCount">0 SEMBOL</div></div>
@@ -203,7 +200,6 @@ textarea.fi{height:60px;resize:vertical}
   <div id="wList"></div>
 </div>
 
-<!-- REVIEW -->
 <div class="page content" id="page-review">
   <div class="ptitle">Haftalık Review</div><div class="psub">PAZAR RUTINI</div>
   <div class="g2" id="rvStats" style="margin-bottom:14px"></div>
@@ -211,16 +207,21 @@ textarea.fi{height:60px;resize:vertical}
   <div class="sec"><div class="sec-title" style="margin-bottom:14px">Kontrol Listesi</div><div id="chklist"></div></div>
 </div>
 
-<!-- STATS -->
 <div class="page content" id="page-stats">
-  <div class="ptitle">İstatistik</div><div class="psub">PERFORMANS ANALİZİ</div>
+  <div class="topbar">
+    <div><div class="ptitle">İstatistik</div><div class="psub">PERFORMANS ANALİZİ</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-s btn-sm" onclick="adjustBalance()">SERMAYE EKLE</button>
+      <button class="btn btn-s btn-sm" onclick="resetStartBalance()">BAŞLANGIÇ GÜNCELLE</button>
+    </div>
+  </div>
   <div class="g4" id="stCards" style="margin-bottom:14px"></div>
   <div class="sec" style="margin-bottom:14px">
     <div class="sec-hd"><div class="sec-title">Aylık P&L</div><button class="btn btn-s btn-sm" onclick="exportCSV()">↓ CSV</button></div>
     <div class="chart-wrap"><canvas id="cMoBig"></canvas></div>
   </div>
   <div class="sec" style="margin-bottom:14px">
-    <div class="sec-title" style="margin-bottom:14px">Hedef — 25.000₺ → 250.000₺</div>
+    <div class="sec-title" style="margin-bottom:14px">Hedef — <span id="displayStartBalance">25.000</span>₺ → 250.000₺</div>
     <div class="eq-info" id="tInfo"></div>
     <div class="target-bar"><div class="target-fill" id="tFill" style="width:0%"></div></div>
     <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:6px"><span>Başlangıç</span><span id="tPct">%0</span><span>250.000₺</span></div>
@@ -232,12 +233,36 @@ textarea.fi{height:60px;resize:vertical}
 </div>
 
 <script>
+// VARS
+let startBalance = parseFloat(localStorage.getItem('el2_startBalance')) || 25000;
+let capitalInjections = parseFloat(localStorage.getItem('el2_injections')) || 0;
+
 const DT=[{id:1,symbol:"AKGRT",direction:"Long",date:"2026-01-02",entry:6.8,stop:6.56,tp:7.35,pnl:107,rr:2.21,status:"Closed",setup:"OB",confluences:3,psychology:"Sakin",ruleBreak:false,notes:"Temiz OB girişi"},{id:2,symbol:"YKBNK",direction:"Long",date:"2025-12-31",entry:35.72,stop:34.58,tp:38.76,pnl:100,rr:2.83,status:"Closed",setup:"Demand Zone",confluences:2,psychology:"Sakin",ruleBreak:false,notes:""},{id:3,symbol:"THYAO",direction:"Long",date:"2026-01-15",entry:283.5,stop:276,tp:314.75,pnl:312,rr:4.64,status:"Closed",setup:"BOS+OB",confluences:4,psychology:"Sakin",ruleBreak:false,notes:"Mükemmel trend takibi"},{id:4,symbol:"YKBNK",direction:"Long",date:"2026-01-28",entry:37.36,stop:35.88,tp:40.4,pnl:322,rr:2.0,status:"Closed",setup:"OB",confluences:3,psychology:"Sakin",ruleBreak:false,notes:""},{id:5,symbol:"BTC",direction:"Long",date:"2026-02-02",entry:77500,stop:74021,tp:94365,pnl:-210,rr:3.28,status:"Closed",setup:"Demand Zone",confluences:2,psychology:"Aceleci",ruleBreak:true,notes:"Farklı piyasa, aceleci davrandım"}];
 const DW=[{id:1,symbol:"YKBNK",note:"38 BOS onayı bekle — hedef 42-44",zoneMin:35,zoneMax:38,currentPrice:35.86},{id:2,symbol:"THYAO",note:"285-295 OB veya rejection bekle — hedef 320-340",zoneMin:285,zoneMax:295,currentPrice:292.75},{id:3,symbol:"FROTO",note:"107-110 retest tamamlanmalı, rejection gelmeli",zoneMin:107,zoneMax:112,currentPrice:112}];
 const CHKS=["Tüm işlemleri journal'a ekledim mi?","Kural ihlali yaptıysam sebebini yazdım mı?","Kaçırdığım setup'ları inceledim mi?","Gelecek hafta için watchlist hazırladım mı?","Bu haftaki psikolojimi değerlendirdim mi?","Hedefimden ne kadar uzaktayım?"];
 let trades=function(){try{const d=localStorage.getItem('el2t');return d?JSON.parse(d):DT;}catch(e){return DT;}}();
 let watchlist=function(){try{const d=localStorage.getItem('el2w');return d?JSON.parse(d):DW;}catch(e){return DW;}}();
 let tab='dashboard',CHS={};
+
+// BALANCE FUNCTIONS
+function adjustBalance() {
+    const amount = prompt("Eklenecek Nakit Miktarı (₺):", "0");
+    if (amount !== null && !isNaN(parseFloat(amount))) {
+        capitalInjections += parseFloat(amount);
+        localStorage.setItem('el2_injections', capitalInjections);
+        render();
+    }
+}
+
+function resetStartBalance() {
+    const amount = prompt("Yeni Başlangıç Bakiyesi (₺):", startBalance);
+    if (amount !== null && !isNaN(parseFloat(amount))) {
+        startBalance = parseFloat(amount);
+        localStorage.setItem('el2_startBalance', startBalance);
+        render();
+    }
+}
+
 function sv(t){localStorage.setItem('el2t',JSON.stringify(t));}
 function sw(w){localStorage.setItem('el2w',JSON.stringify(w));}
 function fp(v,s='₺'){const a=Math.abs(v);const str=a>=1000?a.toLocaleString('tr-TR'):String(a);return(v>=0?'+':'-')+str+' '+s;}
@@ -260,7 +285,7 @@ function gmd(){
   return{labels:keys.map(k=>{const[y,mo]=k.split('-');return MN[+mo-1]+' '+y.slice(2);}),data:keys.map(k=>m[k])};
 }
 function geq(){
-  const start=25000,sorted=[...trades.filter(t=>t.status==='Closed')].sort((a,b)=>a.date.localeCompare(b.date));
+  const start=startBalance + capitalInjections,sorted=[...trades.filter(t=>t.status==='Closed')].sort((a,b)=>a.date.localeCompare(b.date));
   const pts=[{x:'Başlangıç',y:start}];let r=start;
   const MN=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
   sorted.forEach(t=>{r+=t.pnl;const d=new Date(t.date);pts.push({x:MN[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' ('+t.symbol+')',y:Math.round(r)});});
@@ -292,7 +317,7 @@ function render(){
 }
 function rDash(st){
   document.getElementById('dStats').innerHTML=[sc('WIN RATE',st.wr+'%',`${st.ws.length}K / ${st.ls.length}K`,st.wr>=60?'var(--green)':'var(--red)'),sc('TOPLAM İŞLEM',trades.length,`${st.cl.length} kapalı`,'var(--text)'),sc('AVG R:R',st.ar,'hedef ≥ 2.0',+st.ar>=2?'var(--acid)':'var(--yellow)'),sc('KURAL İHLALİ',st.rb,st.rb===0?'Mükemmel!':'azalt!',st.rb===0?'var(--acid)':'var(--red)')].join('');
-  const ep=geq();const latest=ep[ep.length-1]?.y||25000;const ch=latest-25000;
+  const ep=geq();const latest=ep[ep.length-1]?.y||(startBalance + capitalInjections);const ch=latest-(startBalance + capitalInjections);
   const dce=document.getElementById('dEqChange');dce.textContent=fp(ch);dce.style.color=pc(ch);
   setTimeout(()=>bEq('cEq',ep),50);
   const md=gmd();setTimeout(()=>bChart('cMo','bar',md.labels,md.data),50);
@@ -316,10 +341,11 @@ function rReview(st){
   document.getElementById('chklist').innerHTML=CHKS.map((item,i)=>`<label class="chk-item"><input type="checkbox" id="ck${i}"><label for="ck${i}">${item}</label></label>`).join('');
 }
 function rStats(st){
+  document.getElementById('displayStartBalance').textContent = startBalance.toLocaleString('tr-TR');
   document.getElementById('stCards').innerHTML=[sc('WIN RATE',st.wr+'%',`${st.ws.length}K / ${st.ls.length}K`,st.wr>=60?'var(--green)':'var(--red)'),sc('AVG R:R',st.ar,'≥ 2.0 hedef',+st.ar>=2?'var(--acid)':'var(--yellow)'),sc('AVG KAZANÇ','+'+st.aw+'₺','kazanan','var(--green)'),sc('AVG KAYIP',st.al+'₺','kaybeden','var(--red)')].join('');
   const md=gmd();setTimeout(()=>bChart('cMoBig','bar',md.labels,md.data),50);
-  const start=25000,cur=start+st.tp,tgt=250000,pct=Math.min(100,Math.max(0,((cur-start)/(tgt-start))*100));
-  document.getElementById('tInfo').innerHTML=`<div><div class="eq-stat-val" style="color:var(--muted)">25.000₺</div><div class="eq-stat-label">BAŞLANGIÇ</div></div><div><div class="eq-stat-val" style="color:var(--acid)">${cur.toLocaleString('tr-TR')}₺</div><div class="eq-stat-label">GÜNCEL</div></div><div><div class="eq-stat-val" style="color:var(--muted)">250.000₺</div><div class="eq-stat-label">HEDEF</div></div>`;
+  const totalStart=startBalance + capitalInjections,cur=totalStart+st.tp,tgt=250000,pct=Math.min(100,Math.max(0,((cur-totalStart)/(tgt-totalStart))*100));
+  document.getElementById('tInfo').innerHTML=`<div><div class="eq-stat-val" style="color:var(--muted)">${totalStart.toLocaleString('tr-TR')}₺</div><div class="eq-stat-label">TOPLAM ANAPARA</div></div><div><div class="eq-stat-val" style="color:var(--acid)">${cur.toLocaleString('tr-TR')}₺</div><div class="eq-stat-label">GÜNCEL DURUM</div></div><div><div class="eq-stat-val" style="color:var(--muted)">250.000₺</div><div class="eq-stat-label">HEDEF</div></div>`;
   document.getElementById('tFill').style.width=Math.max(1,pct)+'%';
   document.getElementById('tPct').textContent='%'+pct.toFixed(1)+' tamamlandı';
   const ep=geq();setTimeout(()=>bEq('cEqBig',ep),50);
