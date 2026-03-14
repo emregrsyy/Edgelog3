@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>EdgeLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--acid:#d4f53c;--acid2:#b8d832;--acid-glow:#d4f53c22;--bg:#050506;--bg2:#09090b;--surface:#0d0d10;--surface2:#121215;--border:#1f1f24;--border2:#2a2a30;--text:#e8e8f0;--muted:#4a4a55;--green:#3ddc84;--red:#ff4d4d;--yellow:#ffc840;--blue:#4da6ff}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;position:sticky;top:0;z-index:200}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;padding:13px 0 0}
+.logo{display:flex;align-items:center;gap:7px}
+.logo-mark{width:28px;height:28px;background:var(--acid);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:15px;height:15px}
+.logo-e{font-family:'Bebas Neue';font-size:21px;color:var(--acid);letter-spacing:2px}
+.logo-l{font-family:'Bebas Neue';font-size:21px;letter-spacing:2px}
+.logo-v{font-size:8px;color:var(--muted);letter-spacing:3px;margin-left:4px;align-self:center}
+.hpnl{text-align:right}
+.hpnl-lbl{font-size:8px;color:var(--muted);letter-spacing:3px}
+.hpnl-val{font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1}
+.ticker{background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 0;overflow:hidden;display:none}
+.ticker.on{display:block}
+.ticker-inner{display:flex;animation:tick 40s linear infinite;width:max-content}
+.ticker-inner:hover{animation-play-state:paused}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{display:flex;align-items:center;gap:5px;padding:0 16px;border-right:1px solid var(--border);white-space:nowrap}
+.ti-sym{font-family:'Bebas Neue';font-size:12px;letter-spacing:1px}
+.abar{background:#1a1500;border-bottom:1px solid #3a3000;padding:7px 18px;display:none;align-items:center;gap:8px;font-size:11px;color:var(--yellow)}
+.abar.on{display:flex}
+.nav{display:flex;overflow-x:auto;scrollbar-width:none;margin-top:2px}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--muted);padding:11px 14px;cursor:pointer;font-size:10px;font-family:'Syne',sans-serif;font-weight:600;letter-spacing:2px;text-transform:uppercase;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s}
+.nav-btn.active{color:var(--acid);border-bottom-color:var(--acid)}
+.content{padding:16px;padding-bottom:100px}
+.page{display:none}.page.active{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.g4{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(min-width:600px){.g4{grid-template-columns:repeat(4,1fr)}}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 17px;position:relative;overflow:hidden}
+.sc-lbl{font-size:8px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;font-family:'Syne'}
+.sc-val{font-family:'Bebas Neue';font-size:27px;letter-spacing:1px;line-height:1}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.sc-glow{position:absolute;bottom:-15px;right:-15px;width:70px;height:70px;border-radius:50%;filter:blur(28px);opacity:0.1}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:12px}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.sec-title{font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;font-family:'Syne';font-weight:600}
+.chart-wrap{position:relative;height:185px}
+.chart-sm{position:relative;height:135px}
+.badge{display:inline-flex;align-items:center;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:600;letter-spacing:1px;border:1px solid}
+.bg{background:#0d2b18;color:var(--green);border-color:#1a4a2a}
+.br{background:#2b0d0d;color:var(--red);border-color:#4a1a1a}
+.by{background:#2b2000;color:var(--yellow);border-color:#4a3800}
+.bb{background:#0d1a2b;color:var(--blue);border-color:#1a3050}
+.bx{background:var(--surface2);color:var(--muted);border-color:var(--border)}
+.btn{border:none;border-radius:9px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:1px;transition:all 0.15s}
+.btn:active{transform:scale(0.96)}
+.btn-p{background:var(--acid);color:#000;padding:10px 16px;font-size:11px}
+.btn-p:hover{background:var(--acid2)}
+.btn-s{background:var(--surface2);color:var(--muted);border:1px solid var(--border);padding:10px 14px;font-size:11px}
+.btn-sm{padding:7px 12px;font-size:10px}
+.bdel{background:none;border:1px solid var(--border);color:var(--muted);border-radius:7px;width:27px;height:27px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.bdel:hover{border-color:var(--red);color:var(--red)}
+.rbtn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:7px;padding:6px 11px;cursor:pointer;font-size:9px;font-family:'DM Mono';color:var(--muted);transition:all 0.2s}
+.rbtn:hover{color:var(--acid);border-color:var(--acid)}
+.rbtn.loading svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.nbtn{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:10px;font-family:'DM Mono';color:var(--muted);transition:all 0.2s}
+.nbtn.on{border-color:#3ddc8450;color:var(--green)}
+.fp{background:var(--bg2);border:1px solid var(--acid-glow);border-radius:12px;padding:17px;margin-bottom:13px}
+.fp-title{font-size:9px;color:var(--acid);letter-spacing:3px;font-family:'Syne';font-weight:600;margin-bottom:14px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ff{grid-column:1/-1}
+.fl{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:5px;font-family:'Syne'}
+.fi{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px 12px;font-size:13px;width:100%;outline:none;font-family:'DM Mono';-webkit-appearance:none;appearance:none}
+.fi:focus{border-color:var(--border2)}
+textarea.fi{height:52px;resize:vertical}
+.fck{display:flex;align-items:center;gap:10px;padding:8px 0}
+.fck input{width:17px;height:17px;accent-color:var(--red);cursor:pointer}
+.fck label{font-size:11px;color:var(--red);cursor:pointer}
+.fbtns{display:flex;gap:8px;margin-top:12px}
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px;margin-bottom:9px}
+.tc.rb{border-color:#ff4d4d18}
+.tsym{font-family:'Bebas Neue';font-size:18px;letter-spacing:1px}
+.tdate{font-size:10px;color:var(--muted)}
+.tpnl{font-family:'Bebas Neue';font-size:20px;letter-spacing:1px}
+.trr{font-size:10px;color:var(--muted);text-align:right}
+.tbadges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.tnotes{font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:7px;margin-top:5px;line-height:1.5;font-style:italic}
+.wc{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px;margin-bottom:9px}
+.wc.inzone{border-color:#ffc84050;background:linear-gradient(135deg,var(--surface),#1a150a)}
+.wc.near{border-color:#4da6ff30}
+.wsym{font-family:'Bebas Neue';font-size:20px;letter-spacing:1px}
+.wnote{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.ztrack{height:5px;background:var(--surface2);border-radius:3px;position:relative;margin:9px 0}
+.zfill{position:absolute;inset:0;background:linear-gradient(90deg,#3ddc8420,#3ddc8450);border-radius:3px}
+.zdot{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);transition:left 0.5s;box-shadow:0 0 5px currentColor}
+.pu{display:flex;gap:7px;margin-top:9px;align-items:center}
+.pu input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:7px 11px;font-size:13px;font-family:'DM Mono';outline:none}
+.prog{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.progf{height:100%;border-radius:2px;transition:width 0.6s}
+.target-bar{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;margin:9px 0}
+.target-fill{height:100%;background:linear-gradient(90deg,var(--acid-glow),var(--acid));border-radius:6px;transition:width 1.2s}
+.chk-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.chk-item:last-child{border-bottom:none}
+.chk-item input{width:16px;height:16px;accent-color:var(--acid);flex-shrink:0;margin-top:1px;cursor:pointer}
+.chk-item label{font-size:12px;color:#ccc;cursor:pointer;line-height:1.5}
+.empty{text-align:center;padding:32px 20px;color:var(--muted);font-size:12px;line-height:2}
+.ptitle{font-family:'Syne';font-weight:800;font-size:18px;letter-spacing:-0.5px;margin-bottom:3px}
+.psub{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:15px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}
+.symrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.symrow:last-child{border-bottom:none}
+.symnm{font-family:'Bebas Neue';font-size:16px;letter-spacing:1px}
+.symmeta{font-size:10px;color:var(--muted)}
+.sympnl{font-family:'Bebas Neue';font-size:16px;text-align:right}
+.rcard{border-radius:11px;padding:13px;margin-bottom:9px}
+.rcbest{background:linear-gradient(135deg,#0d2b18,#091a10);border:1px solid #1a4a2a}
+.rcworst{background:linear-gradient(135deg,#2b0d0d,#1a0909);border:1px solid #4a1a1a}
+.eq-info{display:flex;justify-content:space-between;margin-bottom:11px}
+.eq-val{font-family:'Bebas Neue';font-size:17px;text-align:center}
+.eq-lbl{font-size:8px;color:var(--muted);letter-spacing:2px;text-align:center;font-family:'Syne'}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+/* BIST30 */
+.scanner-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.scanner-search{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 13px;font-size:13px;font-family:'DM Mono';outline:none;flex:1;min-width:100px}
+.filter-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);padding:7px 11px;cursor:pointer;font-size:10px;font-family:'DM Mono';transition:all 0.2s;white-space:nowrap}
+.filter-btn.active{background:var(--acid-glow);border-color:var(--acid);color:var(--acid)}
+.sort-bar{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.sort-bar::-webkit-scrollbar{display:none}
+.sort-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:5px 9px;cursor:pointer;font-size:9px;font-family:'DM Mono';white-space:nowrap;transition:all 0.2s}
+.sort-btn.active{background:var(--acid-glow);border-color:var(--acid);color:var(--acid)}
+.bist-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:480px){.bist-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px){.bist-grid{grid-template-columns:repeat(4,1fr)}}
+.bist-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.bist-card:hover{border-color:var(--border2);background:var(--surface2)}
+.bist-card.in-zone{border-color:#ffc84050;background:linear-gradient(135deg,var(--surface),#1a150a)}
+.bist-card.gaining{border-left:2px solid var(--green)}
+.bist-card.losing{border-left:2px solid var(--red)}
+.bc-sym{font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;margin-bottom:3px}
+.bc-price{font-family:'Bebas Neue';font-size:19px;letter-spacing:1px;line-height:1}
+.bc-chg{font-size:11px;font-weight:500;margin-top:2px}
+.bc-vol{font-size:9px;color:var(--muted);margin-top:3px}
+.bc-zone{position:absolute;top:6px;right:6px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.bc-loading{font-size:11px;color:var(--muted);animation:pulse 1s infinite}
+.market-info{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+/* API STATUS */
+.api-status{font-size:9px;padding:4px 8px;border-radius:5px;border:1px solid}
+.api-ok{background:#0d2b18;color:var(--green);border-color:#1a4a2a}
+.api-err{background:#2b0d0d;color:var(--red);border-color:#4a1a1a}
+.api-loading{background:var(--surface2);color:var(--muted);border-color:var(--border)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 15 15" fill="none"><path d="M2 11L5.5 7.5L8.5 10.5L13 4" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="logo-e">EDGE</span><span class="logo-l">LOG</span><span class="logo-v">v4</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="nbtn" id="notifBtn" onclick="toggleNotif()">🔔 <span id="notifTxt">Bildirim</span></button>
+      <div class="hpnl"><div class="hpnl-lbl">P&L</div><div class="hpnl-val" id="hpnl">+0 ₺</div></div>
+    </div>
+  </div>
+  <div class="ticker" id="tickerBar"><div class="ticker-inner" id="tickerInner"></div></div>
+  <div class="abar" id="alertBar"><span>⚡</span><span id="alertText"></span></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="go('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="go('bist30')">BIST30</button>
+    <button class="nav-btn" onclick="go('journal')">Journal</button>
+    <button class="nav-btn" onclick="go('watchlist')">Watchlist</button>
+    <button class="nav-btn" onclick="go('review')">Review</button>
+    <button class="nav-btn" onclick="go('stats')">İstatistik</button>
+  </nav>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page active content" id="page-dashboard">
+  <div class="g4" id="dStats" style="margin-bottom:12px"></div>
+  <div class="sec"><div class="sec-hd"><div class="sec-title">Kasa Büyüme Eğrisi</div><div id="dEqChange" style="font-family:'Bebas Neue';font-size:14px"></div></div><div class="chart-wrap"><canvas id="cEq"></canvas></div></div>
+  <div class="g2" style="margin-bottom:12px">
+    <div class="sec"><div class="sec-title" style="margin-bottom:12px">Aylık P&L</div><div class="chart-sm"><canvas id="cMo"></canvas></div></div>
+    <div class="sec"><div class="sec-title" style="margin-bottom:12px">Psikoloji</div><div id="dPsych"></div></div>
+  </div>
+  <div class="sec"><div class="sec-hd"><div class="sec-title">Son İşlemler</div><button class="btn btn-s btn-sm" onclick="go('journal')">Tümü →</button></div><div id="dTrades"></div></div>
+</div>
+
+<!-- BIST30 -->
+<div class="page content" id="page-bist30">
+  <div class="topbar">
+    <div><div class="ptitle">BIST30</div><div class="psub">CANLI PİYASA TARAYICI</div></div>
+    <button class="rbtn" id="b30Refresh" onclick="fetchBIST30()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Güncelle
+    </button>
+  </div>
+  <div class="market-info">
+    <div class="live-dot"></div>
+    <span id="marketStatus">Bağlanılıyor...</span>
+    <span id="apiStatusBadge" class="api-status api-loading">API kontrol ediliyor</span>
+    <span id="lastUpdate" style="font-size:9px;color:var(--muted)"></span>
+  </div>
+  <div class="scanner-controls">
+    <input class="scanner-search" id="bist30Search" placeholder="🔍 Hisse ara..." oninput="renderBIST30Grid()"/>
+    <button class="filter-btn active" onclick="setFilter('all',this)">Tümü</button>
+    <button class="filter-btn" onclick="setFilter('top',this)">↑ Yükselen</button>
+    <button class="filter-btn" onclick="setFilter('bot',this)">↓ Düşen</button>
+    <button class="filter-btn" onclick="setFilter('zone',this)">⚡ Zone</button>
+  </div>
+  <div class="sort-bar">
+    <button class="sort-btn active" onclick="sortBIST30('sym',this)">A-Z</button>
+    <button class="sort-btn" onclick="sortBIST30('chg',this)">Değişim</button>
+    <button class="sort-btn" onclick="sortBIST30('price',this)">Fiyat</button>
+  </div>
+  <div class="bist-grid" id="bist30Grid"></div>
+</div>
+
+<!-- JOURNAL -->
+<div class="page content" id="page-journal">
+  <div class="topbar">
+    <div><div class="ptitle">Journal</div><div class="psub" id="jCount">0 KAYIT</div></div>
+    <div style="display:flex;gap:7px">
+      <button class="btn btn-s btn-sm" onclick="exportCSV()">↓ CSV</button>
+      <button class="btn btn-p btn-sm" onclick="toggleForm()">+ YENİ</button>
+    </div>
+  </div>
+  <div class="fp" id="tradeForm" style="display:none">
+    <div class="fp-title">Yeni İşlem Kaydı</div>
+    <div class="fg">
+      <div><label class="fl">Sembol</label><input class="fi" id="f-symbol" placeholder="THYAO" oninput="this.value=this.value.toUpperCase()"/></div>
+      <div><label class="fl">Tarih</label><input class="fi" type="date" id="f-date"/></div>
+      <div><label class="fl">Yön</label><select class="fi" id="f-dir"><option>Long</option><option>Short</option></select></div>
+      <div><label class="fl">Setup</label><select class="fi" id="f-setup"><option>OB</option><option>Demand Zone</option><option>Supply Zone</option><option>BOS+OB</option><option>CHoCH</option><option>FVG</option><option>Trend Takibi</option><option>Diğer</option></select></div>
+      <div><label class="fl">Giriş</label><input class="fi" type="number" id="f-entry" placeholder="0" oninput="calcRR()"/></div>
+      <div><label class="fl">Stop Loss</label><input class="fi" type="number" id="f-stop" placeholder="0" oninput="calcRR()"/></div>
+      <div><label class="fl">Take Profit</label><input class="fi" type="number" id="f-tp" placeholder="0" oninput="calcRR()"/></div>
+      <div><label class="fl">R:R <span id="rrHint" style="color:var(--acid);display:none;font-size:8px">AUTO</span></label><input class="fi" type="number" id="f-rr" step="0.1" placeholder="2.0"/></div>
+      <div><label class="fl">P&L (₺)</label><input class="fi" type="number" id="f-pnl" placeholder="0"/></div>
+      <div><label class="fl">Confluences</label><input class="fi" type="number" id="f-conf" min="1" max="6" placeholder="2"/></div>
+      <div><label class="fl">Psikoloji</label><select class="fi" id="f-psych"><option>Sakin</option><option>Aceleci</option><option>Korkmuş</option><option>Aşırı Güvenli</option><option>Kararsız</option></select></div>
+      <div><label class="fl">Durum</label><select class="fi" id="f-status"><option>Closed</option><option>Open</option><option>BE</option></select></div>
+      <div class="ff"><label class="fl">Notlar</label><textarea class="fi" id="f-notes" placeholder="Setup, beklenti, confluences..."></textarea></div>
+      <div class="ff fck"><input type="checkbox" id="f-rule"><label for="f-rule">⚠️ Kural ihlali var</label></div>
+    </div>
+    <div class="fbtns"><button class="btn btn-p" onclick="saveTrade()" style="flex:1">KAYDET</button><button class="btn btn-s" onclick="toggleForm()" style="flex:0.5">İPTAL</button></div>
+  </div>
+  <div id="jList"></div>
+</div>
+
+<!-- WATCHLIST -->
+<div class="page content" id="page-watchlist">
+  <div class="topbar">
+    <div><div class="ptitle">Watchlist</div><div class="psub" id="wCount">0 SEMBOL</div></div>
+    <div style="display:flex;gap:7px">
+      <button class="rbtn" onclick="fetchWatchlistPrices()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Güncelle
+      </button>
+      <button class="btn btn-p btn-sm" onclick="toggleWatchForm()">+ EKLE</button>
+    </div>
+  </div>
+  <div class="fp" id="watchForm" style="display:none">
+    <div class="fp-title">Sembol Ekle</div>
+    <div class="fg">
+      <div><label class="fl">Sembol</label><input class="fi" id="w-symbol" placeholder="CWENE" oninput="this.value=this.value.toUpperCase()"/></div>
+      <div><label class="fl">Güncel Fiyat</label><input class="fi" type="number" id="w-price" placeholder="0"/></div>
+      <div><label class="fl">Zone Alt</label><input class="fi" type="number" id="w-min" placeholder="0"/></div>
+      <div><label class="fl">Zone Üst</label><input class="fi" type="number" id="w-max" placeholder="0"/></div>
+      <div class="ff"><label class="fl">Not</label><textarea class="fi" id="w-note" placeholder="Setup beklentisi, hedef..." style="height:50px"></textarea></div>
+    </div>
+    <div class="fbtns"><button class="btn btn-p" onclick="saveWatch()" style="flex:1">EKLE</button><button class="btn btn-s" onclick="toggleWatchForm()" style="flex:0.5">İPTAL</button></div>
+  </div>
+  <div id="wList"></div>
+</div>
+
+<!-- REVIEW -->
+<div class="page content" id="page-review">
+  <div class="ptitle">Haftalık Review</div><div class="psub">PAZAR RUTINI</div>
+  <div class="g2" id="rvStats" style="margin-bottom:12px"></div>
+  <div id="rvBest"></div><div id="rvWorst"></div>
+  <div class="sec"><div class="sec-title" style="margin-bottom:13px">Kontrol Listesi</div><div id="chklist"></div></div>
+</div>
+
+<!-- STATS -->
+<div class="page content" id="page-stats">
+  <div class="ptitle">İstatistik</div><div class="psub">PERFORMANS ANALİZİ</div>
+  <div class="g4" id="stCards" style="margin-bottom:12px"></div>
+  <div class="sec" style="margin-bottom:12px"><div class="sec-hd"><div class="sec-title">Aylık P&L</div><button class="btn btn-s btn-sm" onclick="exportCSV()">↓ CSV</button></div><div class="chart-wrap"><canvas id="cMoBig"></canvas></div></div>
+  <div class="sec" style="margin-bottom:12px">
+    <div class="sec-title" style="margin-bottom:11px">Hedef — 25.000₺ → 250.000₺</div>
+    <div class="eq-info" id="tInfo"></div>
+    <div class="target-bar"><div class="target-fill" id="tFill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:5px"><span>Başlangıç</span><span id="tPct">%0</span><span>250.000₺</span></div>
+    <div class="chart-wrap" style="margin-top:13px"><canvas id="cEqBig"></canvas></div>
+  </div>
+  <div class="sec" style="margin-bottom:12px"><div class="sec-title" style="margin-bottom:12px">Sembol Bazlı</div><div id="stSym"></div></div>
+  <div class="sec" style="margin-bottom:12px"><div class="sec-title" style="margin-bottom:12px">Setup Performansı</div><div id="stSetup"></div></div>
+  <div class="sec"><div class="sec-title" style="margin-bottom:12px">Psikoloji Analizi</div><div id="stPsych"></div></div>
+</div>
+
+<script>
+// ─── BIST30 ──────────────────────────────────────────────────────
+const BIST30=['AKBNK','ARCLK','ASELS','BIMAS','DOHOL','ECILC','EREGL','FROTO','GARAN','GUBRF','HALKB','ISCTR','KCHOL','KOZAL','KOZAA','KRDMD','MGROS','ODAS','PETKM','PGSUS','SAHOL','SASA','SISE','TAVHL','TCELL','THYAO','TKFEN','TOASO','TTKOM','TUPRS','VAKBN','YKBNK'];
+
+let priceCache={};
+let bist30Filter='all',bist30Sort='sym',bist30SortDir=1,bist30FetchDone=false;
+
+// ─── VERİ ────────────────────────────────────────────────────────
+const DT=[{id:1,symbol:"AKGRT",direction:"Long",date:"2026-01-02",entry:6.8,stop:6.56,tp:7.35,pnl:107,rr:2.21,status:"Closed",setup:"OB",confluences:3,psychology:"Sakin",ruleBreak:false,notes:"Temiz OB girişi"},{id:2,symbol:"YKBNK",direction:"Long",date:"2025-12-31",entry:35.72,stop:34.58,tp:38.76,pnl:100,rr:2.83,status:"Closed",setup:"Demand Zone",confluences:2,psychology:"Sakin",ruleBreak:false,notes:""},{id:3,symbol:"THYAO",direction:"Long",date:"2026-01-15",entry:283.5,stop:276,tp:314.75,pnl:312,rr:4.64,status:"Closed",setup:"BOS+OB",confluences:4,psychology:"Sakin",ruleBreak:false,notes:"Mükemmel trend takibi"},{id:4,symbol:"YKBNK",direction:"Long",date:"2026-01-28",entry:37.36,stop:35.88,tp:40.4,pnl:322,rr:2.0,status:"Closed",setup:"OB",confluences:3,psychology:"Sakin",ruleBreak:false,notes:""},{id:5,symbol:"BTC",direction:"Long",date:"2026-02-02",entry:77500,stop:74021,tp:94365,pnl:-210,rr:3.28,status:"Closed",setup:"Demand Zone",confluences:2,psychology:"Aceleci",ruleBreak:true,notes:"Farklı piyasa, aceleci davrandım"}];
+const DW=[{id:1,symbol:"YKBNK",note:"38 BOS onayı bekle — hedef 42-44",zoneMin:35,zoneMax:38,currentPrice:35.86,change:null,lastUpdated:null},{id:2,symbol:"THYAO",note:"285-295 OB veya rejection bekle — hedef 320-340",zoneMin:285,zoneMax:295,currentPrice:292.75,change:null,lastUpdated:null},{id:3,symbol:"FROTO",note:"107-110 retest tamamlanmalı, rejection gelmeli",zoneMin:107,zoneMax:112,currentPrice:112,change:null,lastUpdated:null}];
+const CHKS=["Tüm işlemleri journal'a ekledim mi?","Kural ihlali yaptıysam sebebini yazdım mı?","Kaçırdığım setup'ları inceledim mi?","Gelecek hafta için watchlist hazırladım mı?","Bu haftaki psikolojimi değerlendirdim mi?","Hedefimden ne kadar uzaktayım?"];
+
+let trades=function(){try{const d=localStorage.getItem('el4t');return d?JSON.parse(d):DT;}catch(e){return DT;}}();
+let watchlist=function(){try{const d=localStorage.getItem('el4w');return d?JSON.parse(d):DW;}catch(e){return DW;}}();
+let tab='dashboard',CHS={},notifEnabled=false;
+
+function sv(t){localStorage.setItem('el4t',JSON.stringify(t));}
+function sw(w){localStorage.setItem('el4w',JSON.stringify(w));}
+function fp(v,s='₺'){const a=Math.abs(v);const str=a>=1000?a.toLocaleString('tr-TR'):String(a);return(v>=0?'+':'-')+str+' '+s;}
+function pc(v){return v>=0?'var(--green)':'var(--red)';}
+function bdg(t,c){return`<span class="badge b${c}">${t}</span>`;}
+function psychC(p){return p==='Sakin'?'g':p==='Aceleci'||p==='Korkmuş'?'r':'y';}
+function fmtVol(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(0)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
+function gs(){
+  const cl=trades.filter(t=>t.status==='Closed'),ws=cl.filter(t=>t.pnl>0),ls=cl.filter(t=>t.pnl<=0);
+  const tp=cl.reduce((s,t)=>s+t.pnl,0),wr=cl.length?Math.round((ws.length/cl.length)*100):0;
+  const ar=cl.length?(cl.reduce((s,t)=>s+t.rr,0)/cl.length).toFixed(2):0;
+  const aw=ws.length?Math.round(ws.reduce((s,t)=>s+t.pnl,0)/ws.length):0;
+  const al=ls.length?Math.round(ls.reduce((s,t)=>s+t.pnl,0)/ls.length):0;
+  return{cl,ws,ls,tp,wr,ar,aw,al,rb:trades.filter(t=>t.ruleBreak).length};
+}
+function gmd(){
+  const m={};trades.filter(t=>t.status==='Closed').forEach(t=>{const k=t.date.substring(0,7);m[k]=(m[k]||0)+t.pnl;});
+  const keys=Object.keys(m).sort();
+  const MN=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  return{labels:keys.map(k=>{const[y,mo]=k.split('-');return MN[+mo-1]+'\''+y.slice(2);}),data:keys.map(k=>m[k])};
+}
+function geq(){
+  const start=25000,sorted=[...trades.filter(t=>t.status==='Closed')].sort((a,b)=>a.date.localeCompare(b.date));
+  const pts=[{x:'Başlangıç',y:start}];let r=start;
+  const MN=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  sorted.forEach(t=>{r+=t.pnl;const d=new Date(t.date);pts.push({x:MN[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' ('+t.symbol+')',y:Math.round(r)});});
+  return pts;
+}
+
+// ─── FİYAT ÇEKİCİ — ÇOKLU FALLBACK ──────────────────────────────
+async function fetchPrice(symbol){
+  const cached=priceCache[symbol];
+  if(cached&&Date.now()-cached.ts<180000) return cached.data;
+
+  const ticker=symbol==='BTC'?'BTC-USD':symbol+'.IS';
+
+  // Proxy listesi — sırayla dener
+  const proxies=[
+    `https://corsproxy.io/?${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ticker+'?interval=1d&range=1d')}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/'+ticker+'?interval=1d&range=1d')}`,
+    `https://thingproxy.freeboard.io/fetch/https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`,
+  ];
+
+  for(let i=0;i<proxies.length;i++){
+    try{
+      const res=await fetch(proxies[i],{signal:AbortSignal.timeout(8000)});
+      if(!res.ok) continue;
+      const raw=await res.json();
+
+      // allorigins wrapper
+      let parsed=raw;
+      if(raw.contents) parsed=JSON.parse(raw.contents);
+
+      const meta=parsed?.chart?.result?.[0]?.meta;
+      if(!meta||!meta.regularMarketPrice) continue;
+
+      const data={
+        price:meta.regularMarketPrice,
+        change:parseFloat(((meta.regularMarketPrice-meta.chartPreviousClose)/meta.chartPreviousClose*100).toFixed(2)),
+        prev:meta.chartPreviousClose,
+        volume:meta.regularMarketVolume||0,
+        high:meta.regularMarketDayHigh||0,
+        low:meta.regularMarketDayLow||0,
+        proxyUsed:i
+      };
+      priceCache[symbol]={data,ts:Date.now()};
+
+      // API status badge güncelle
+      const badge=document.getElementById('apiStatusBadge');
+      if(badge){badge.className='api-status api-ok';badge.textContent='API ✓ bağlı';}
+      return data;
+    }catch(e){continue;}
+  }
+
+  // Tüm proxy'ler başarısız
+  const badge=document.getElementById('apiStatusBadge');
+  if(badge){badge.className='api-status api-err';badge.textContent='API bağlanamıyor';}
+  return null;
+}
+
+// ─── BIST30 FETCH ─────────────────────────────────────────────────
+async function fetchBIST30(){
+  const btn=document.getElementById('b30Refresh');
+  if(btn) btn.classList.add('loading');
+  document.getElementById('marketStatus').textContent='Fiyatlar yükleniyor... (32 hisse)';
+  document.getElementById('apiStatusBadge').className='api-status api-loading';
+  document.getElementById('apiStatusBadge').textContent='Bağlanılıyor...';
+
+  renderBIST30Skeleton();
+
+  // 8'li batch'ler halinde çek
+  const batchSize=8;
+  for(let i=0;i<BIST30.length;i+=batchSize){
+    const batch=BIST30.slice(i,i+batchSize);
+    await Promise.allSettled(batch.map(sym=>fetchPrice(sym)));
+    renderBIST30Grid();
+  }
+
+  bist30FetchDone=true;
+  const now=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  const loaded=Object.keys(priceCache).length;
+  document.getElementById('marketStatus').textContent=`${loaded} hisse yüklendi`;
+  document.getElementById('lastUpdate').textContent=`Son: ${now}`;
+  if(btn) btn.classList.remove('loading');
+
+  buildTicker();
+
+  // Watchlist fiyatlarını güncelle
+  const wNow=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  watchlist.forEach(w=>{
+    const c=priceCache[w.symbol]?.data;
+    if(c){
+      const wasOut=w.currentPrice<w.zoneMin||w.currentPrice>w.zoneMax;
+      w.currentPrice=c.price;w.change=c.change;w.lastUpdated=wNow;
+      if(wasOut&&c.price>=w.zoneMin&&c.price<=w.zoneMax&&notifEnabled) sendNotif(w.symbol,`Zone'a girdi! Güncel: ${c.price?.toFixed(2)}`);
+    }
+  });
+  sw(watchlist);checkAlerts();
+}
+
+function renderBIST30Skeleton(){
+  document.getElementById('bist30Grid').innerHTML=BIST30.map(sym=>`
+    <div class="bist-card">
+      <div class="bc-sym">${sym}</div>
+      <div class="bc-price bc-loading">—</div>
+      <div class="bc-chg" style="color:var(--muted);font-size:10px">yükleniyor...</div>
+    </div>`).join('');
+}
+
+function renderBIST30Grid(){
+  const search=(document.getElementById('bist30Search')?.value||'').toLowerCase();
+  let data=BIST30.map(sym=>{
+    const c=priceCache[sym]?.data;
+    const wl=watchlist.find(w=>w.symbol===sym);
+    const inZone=wl&&c&&c.price>=wl.zoneMin&&c.price<=wl.zoneMax;
+    return{sym,c,inZone,wl};
+  });
+  if(search) data=data.filter(d=>d.sym.toLowerCase().includes(search));
+  if(bist30Filter==='top') data=data.filter(d=>d.c&&d.c.change>0);
+  if(bist30Filter==='bot') data=data.filter(d=>d.c&&d.c.change<0);
+  if(bist30Filter==='zone') data=data.filter(d=>d.inZone);
+  data.sort((a,b)=>{
+    if(bist30Sort==='sym') return a.sym.localeCompare(b.sym)*bist30SortDir;
+    if(bist30Sort==='chg') return((a.c?.change||0)-(b.c?.change||0))*bist30SortDir;
+    if(bist30Sort==='price') return((a.c?.price||0)-(b.c?.price||0))*bist30SortDir;
+    return 0;
+  });
+  document.getElementById('bist30Grid').innerHTML=data.map(({sym,c,inZone})=>{
+    if(!c) return`<div class="bist-card"><div class="bc-sym">${sym}</div><div class="bc-price bc-loading">—</div><div class="bc-chg" style="color:var(--muted);font-size:10px">yükleniyor...</div></div>`;
+    const cc=c.change>0?'var(--green)':c.change<0?'var(--red)':'var(--muted)';
+    const cs=c.change>0?'+':'';
+    const cls=inZone?' in-zone':c.change>0?' gaining':c.change<0?' losing':'';
+    return`<div class="bist-card${cls}" onclick="addToWatchFromScan('${sym}',${c.price},${c.change})">
+      <div class="bc-sym">${sym}</div>
+      <div class="bc-price" style="color:${cc}">${c.price?.toFixed(2)}</div>
+      <div class="bc-chg" style="color:${cc}">${cs}${c.change}%</div>
+      <div class="bc-vol">${fmtVol(c.volume)}</div>
+      ${inZone?`<div class="bc-zone"><span class="badge by" style="font-size:8px">⚡</span></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function addToWatchFromScan(sym,price,change){
+  const exists=watchlist.find(w=>w.symbol===sym);
+  if(exists){alert(sym+' zaten watchlist\'inde!');return;}
+  const note=prompt(`${sym} için not (boş bırakılabilir):`)||'';
+  const zMin=parseFloat(prompt(`Zone Alt fiyatı:`,price));
+  const zMax=parseFloat(prompt(`Zone Üst fiyatı:`,price));
+  if(!zMin||!zMax){return;}
+  watchlist.unshift({id:Date.now(),symbol:sym,note,zoneMin:zMin,zoneMax:zMax,currentPrice:price,change,lastUpdated:new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})});
+  sw(watchlist);alert(`✅ ${sym} watchlist'e eklendi!`);buildTicker();checkAlerts();
+}
+
+function setFilter(f,el){bist30Filter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderBIST30Grid();}
+function sortBIST30(s,el){if(bist30Sort===s)bist30SortDir*=-1;else{bist30Sort=s;bist30SortDir=s==='chg'?-1:1;}document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderBIST30Grid();}
+
+// ─── TICKER ───────────────────────────────────────────────────────
+function buildTicker(){
+  const items=Object.entries(priceCache).filter(([,v])=>v.data).slice(0,20);
+  if(!items.length) return;
+  const html=items.map(([sym,{data:c}])=>{
+    const col=c.change>0?'var(--green)':c.change<0?'var(--red)':'var(--muted)';
+    const s=c.change>0?'+':'';
+    const wl=watchlist.find(w=>w.symbol===sym);
+    const inZ=wl&&c.price>=wl.zoneMin&&c.price<=wl.zoneMax;
+    return`<div class="ti"><span class="ti-sym">${sym}</span><span style="font-size:11px;color:${col}">${c.price?.toFixed(2)}</span><span style="font-size:10px;color:${col}">${s}${c.change}%</span>${inZ?'<span style="color:var(--yellow);font-size:10px">⚡</span>':''}</div>`;
+  }).join('');
+  const inner=document.getElementById('tickerInner');
+  if(inner&&html){inner.innerHTML=html+html;document.getElementById('tickerBar').classList.add('on');}
+}
+
+// ─── WATCHLIST FETCH ──────────────────────────────────────────────
+async function fetchWatchlistPrices(){
+  await Promise.allSettled(watchlist.map(async w=>{
+    const c=await fetchPrice(w.symbol);
+    if(c){
+      const wasOut=w.currentPrice<w.zoneMin||w.currentPrice>w.zoneMax;
+      w.currentPrice=c.price;w.change=c.change;
+      w.lastUpdated=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+      if(wasOut&&c.price>=w.zoneMin&&c.price<=w.zoneMax&&notifEnabled) sendNotif(w.symbol,`Zone'a girdi! Güncel: ${c.price?.toFixed(2)}`);
+    }
+  }));
+  sw(watchlist);buildTicker();checkAlerts();
+  if(tab==='watchlist')rWatch();
+}
+
+// ─── BİLDİRİM ────────────────────────────────────────────────────
+async function toggleNotif(){
+  if(notifEnabled){notifEnabled=false;document.getElementById('notifBtn').classList.remove('on');document.getElementById('notifTxt').textContent='Bildirim';return;}
+  if(!('Notification' in window)){alert('Bildirim desteklenmiyor');return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted'){notifEnabled=true;document.getElementById('notifBtn').classList.add('on');document.getElementById('notifTxt').textContent='Bildirim ✓';new Notification('EdgeLog ⚡',{body:'Zone bildirimleri aktif!'});}
+}
+function sendNotif(t,b){if(!notifEnabled||Notification.permission!=='granted')return;new Notification('EdgeLog ⚡ '+t,{body:b});}
+
+// ─── AUTO R:R ─────────────────────────────────────────────────────
+function calcRR(){
+  const e=parseFloat(document.getElementById('f-entry').value);
+  const s=parseFloat(document.getElementById('f-stop').value);
+  const t=parseFloat(document.getElementById('f-tp').value);
+  if(e&&s&&t&&e!==s){const rr=(Math.abs(t-e)/Math.abs(e-s)).toFixed(2);document.getElementById('f-rr').value=rr;document.getElementById('rrHint').style.display='inline';document.getElementById('f-rr').style.color='var(--acid)';}
+  else{document.getElementById('rrHint').style.display='none';document.getElementById('f-rr').style.color='';}
+}
+
+// ─── CHARTS ──────────────────────────────────────────────────────
+Chart.defaults.color='#4a4a55';Chart.defaults.borderColor='#1f1f24';Chart.defaults.font.family="'DM Mono',monospace";Chart.defaults.font.size=10;
+function bChart(id,type,labels,data){
+  if(CHS[id])CHS[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;
+  const clr=data.map(v=>v>=0?'#3ddc84':'#ff4d4d'),bg=data.map(v=>v>=0?'#3ddc8430':'#ff4d4d30');
+  CHS[id]=new Chart(ctx,{type,data:{labels,datasets:[{data,backgroundColor:type==='bar'?bg:'transparent',borderColor:type==='bar'?clr:'#d4f53c',borderWidth:type==='bar'?1:2,pointBackgroundColor:'#d4f53c',pointRadius:type==='line'?3:0,fill:type==='line',tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d0d10',borderColor:'#1f1f24',borderWidth:1,padding:10,callbacks:{label:c=>' '+fp(c.raw)}}},scales:{x:{grid:{color:'#1f1f24'},ticks:{maxTicksLimit:6,maxRotation:0}},y:{grid:{color:'#1f1f24'},ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}}}}});
+}
+function bEq(id,pts){
+  if(CHS[id])CHS[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;
+  CHS[id]=new Chart(ctx,{type:'line',data:{labels:pts.map(p=>p.x),datasets:[{label:'Kasa',data:pts.map(p=>p.y),borderColor:'#d4f53c',borderWidth:2,backgroundColor:'#d4f53c08',fill:true,tension:0.4,pointBackgroundColor:'#d4f53c',pointRadius:3,pointHoverRadius:5},{label:'Hedef',data:pts.map(()=>250000),borderColor:'#4a4a5540',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d0d10',borderColor:'#1f1f24',borderWidth:1,padding:10,callbacks:{label:c=>c.dataset.label+': '+c.raw.toLocaleString('tr-TR')+'₺'}}},scales:{x:{grid:{color:'#1f1f2410'},ticks:{maxTicksLimit:5,maxRotation:0}},y:{grid:{color:'#1f1f24'},ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k₺':v+'₺'}}}}});
+}
+
+// ─── ALERTS ──────────────────────────────────────────────────────
+function checkAlerts(){
+  const al=watchlist.filter(w=>w.currentPrice>=w.zoneMin&&w.currentPrice<=w.zoneMax);
+  const bar=document.getElementById('alertBar');
+  if(al.length){bar.classList.add('on');document.getElementById('alertText').textContent=al.map(w=>`${w.symbol} Zone'da! (${w.zoneMin}–${w.zoneMax}) 📍${w.currentPrice?.toFixed?.(2)}`).join('  ·  ');}
+  else bar.classList.remove('on');
+}
+
+function sc(l,v,s,c){return`<div class="sc"><div class="sc-lbl">${l}</div><div class="sc-val" style="color:${c}">${v}</div><div class="sc-sub">${s}</div><div class="sc-glow" style="background:${c}"></div></div>`;}
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function render(){
+  const st=gs();
+  const hel=document.getElementById('hpnl');hel.textContent=fp(st.tp);hel.style.color=pc(st.tp);
+  checkAlerts();
+  if(tab==='dashboard')rDash(st);
+  if(tab==='bist30')renderBIST30Grid();
+  if(tab==='journal')rJournal();
+  if(tab==='watchlist')rWatch();
+  if(tab==='review')rReview(st);
+  if(tab==='stats')rStats(st);
+}
+
+function rDash(st){
+  document.getElementById('dStats').innerHTML=[sc('WIN RATE',st.wr+'%',`${st.ws.length}K / ${st.ls.length}K`,st.wr>=60?'var(--green)':'var(--red)'),sc('TOPLAM İŞLEM',trades.length,`${st.cl.length} kapalı`,'var(--text)'),sc('AVG R:R',st.ar,'hedef ≥ 2.0',+st.ar>=2?'var(--acid)':'var(--yellow)'),sc('KURAL İHLALİ',st.rb,st.rb===0?'Mükemmel!':'azalt!',st.rb===0?'var(--acid)':'var(--red)')].join('');
+  const ep=geq();const ch=(ep[ep.length-1]?.y||25000)-25000;
+  const dce=document.getElementById('dEqChange');dce.textContent=fp(ch);dce.style.color=pc(ch);
+  setTimeout(()=>bEq('cEq',ep),50);
+  const md=gmd();setTimeout(()=>bChart('cMo','bar',md.labels,md.data),50);
+  const pm={};['Sakin','Aceleci','Korkmuş','Aşırı Güvenli','Kararsız'].forEach(p=>{const pt=st.cl.filter(t=>t.psychology===p);if(pt.length)pm[p]={c:pt.length,w:pt.filter(t=>t.pnl>0).length};});
+  document.getElementById('dPsych').innerHTML=Object.entries(pm).map(([p,s])=>{const wr=Math.round((s.w/s.c)*100);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px">${p}</span><div style="display:flex;align-items:center;gap:7px"><div style="width:45px;height:3px;background:var(--surface2);border-radius:2px"><div style="width:${wr}%;height:100%;background:${wr>=60?'var(--green)':'var(--red)'};border-radius:2px"></div></div><span style="font-size:10px;color:var(--muted)">${wr}%</span></div></div>`;}).join('')||'<div class="empty">Veri yok</div>';
+  document.getElementById('dTrades').innerHTML=trades.slice(0,4).map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)"><div><div style="font-family:'Bebas Neue';font-size:15px;letter-spacing:1px">${t.symbol}</div><div style="font-size:10px;color:var(--muted)">${t.setup} · ${t.date}</div></div><div style="font-family:'Bebas Neue';font-size:16px;color:${pc(t.pnl)}">${fp(t.pnl)}</div></div>`).join('')||'<div class="empty">İşlem yok</div>';
+}
+
+function rJournal(){
+  document.getElementById('jCount').textContent=trades.length+' KAYIT';
+  document.getElementById('jList').innerHTML=trades.map(t=>`<div class="tc${t.ruleBreak?' rb':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px"><div><div class="tsym">${t.symbol}</div><div class="tdate">${t.date}</div></div><div style="display:flex;align-items:center;gap:9px"><div><div class="trr">R:R ${t.rr}</div><div class="tpnl" style="color:${pc(t.pnl)}">${fp(t.pnl)}</div></div><button class="bdel" onclick="delTrade(${t.id})">×</button></div></div><div class="tbadges">${bdg(t.direction,t.direction==='Long'?'g':'r')}${bdg(t.setup,'b')}${bdg(t.psychology,psychC(t.psychology))}${bdg(t.confluences+'C','x')}${t.ruleBreak?bdg('KURAL İHLALİ','r'):''}</div>${t.notes?`<div class="tnotes">${t.notes}</div>`:''}</div>`).join('')||'<div class="empty">Henüz işlem yok.</div>';
+}
+
+function rWatch(){
+  document.getElementById('wCount').textContent=watchlist.length+' SEMBOL';
+  document.getElementById('wList').innerHTML=watchlist.map(w=>{
+    const inZone=w.currentPrice>=w.zoneMin&&w.currentPrice<=w.zoneMax;
+    const near=!inZone&&(Math.abs(w.currentPrice-w.zoneMin)/w.zoneMin<0.03||Math.abs(w.currentPrice-w.zoneMax)/w.zoneMax<0.03);
+    const rng=w.zoneMax-w.zoneMin;
+    const pct=rng>0?Math.min(100,Math.max(0,((w.currentPrice-w.zoneMin)/rng)*100)):50;
+    const dc=inZone?'var(--yellow)':'var(--acid)';
+    const cc=w.change>0?'var(--green)':w.change<0?'var(--red)':'var(--muted)';
+    const cs=w.change!=null?`${w.change>0?'+':''}${w.change}%`:'';
+    return`<div class="wc${inZone?' inzone':near?' near':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px">
+        <div><div class="wsym">${w.symbol}${inZone?' ⚡':''}</div><div class="wnote">${w.note||'Not yok'}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="text-align:right">
+            <div style="font-size:9px;color:var(--muted)">${w.lastUpdated||'Manuel'}</div>
+            <div style="font-family:'Bebas Neue';font-size:20px;color:${inZone?'var(--yellow)':cc}">${w.currentPrice?.toFixed?.(2)||'—'}</div>
+            ${cs?`<div style="font-size:10px;color:${cc}">${cs}</div>`:''}
+          </div>
+          ${inZone?bdg("ZONE'DA",'y'):near?bdg('YAKIN','b'):''}
+          <button class="bdel" onclick="delWatch(${w.id})">×</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:4px"><span>Alt: ${w.zoneMin}</span><span>Üst: ${w.zoneMax}</span></div>
+      <div class="ztrack"><div class="zfill"></div><div class="zdot" style="left:${pct}%;background:${dc};color:${dc}"></div></div>
+      <div class="pu"><input type="number" placeholder="Manuel fiyat gir..." onkeydown="if(event.key==='Enter'&&this.value)updPrice(${w.id},this.value)"/><span style="font-size:9px;color:var(--muted)">↵</span></div>
+    </div>`;
+  }).join('')||'<div class="empty">Watchlist boş.<br>BIST30 sekmesinden hisse ekleyebilirsin.</div>';
+}
+
+function rReview(st){
+  document.getElementById('rvStats').innerHTML=[sc('TOPLAM P&L',fp(st.tp),st.tp>=0?'Kârlı dönem':'Kayıplı dönem',pc(st.tp)),sc('KURAL İHLALİ',st.rb,st.rb===0?'Mükemmel!':'Geliştir!',st.rb===0?'var(--acid)':'var(--red)')].join('');
+  const best=[...st.cl].sort((a,b)=>b.pnl-a.pnl)[0],worst=[...st.cl].sort((a,b)=>a.pnl-b.pnl)[0];
+  document.getElementById('rvBest').innerHTML=best?`<div class="rcard rcbest"><div style="font-size:9px;color:var(--green);letter-spacing:3px;margin-bottom:9px">🏆 EN İYİ İŞLEM</div><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-family:'Bebas Neue';font-size:18px">${best.symbol}</div><div style="font-size:10px;color:var(--muted)">${best.setup} · ${best.psychology}</div></div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--green)">${fp(best.pnl)}</div></div></div>`:'';
+  document.getElementById('rvWorst').innerHTML=worst?`<div class="rcard rcworst" style="margin-bottom:12px"><div style="font-size:9px;color:var(--red);letter-spacing:3px;margin-bottom:9px">📉 EN KÖTÜ İŞLEM</div><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-family:'Bebas Neue';font-size:18px">${worst.symbol}</div><div style="font-size:10px;color:var(--muted)">${worst.setup} · ${worst.psychology}</div></div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--red)">${fp(worst.pnl)}</div></div></div>`:'';
+  document.getElementById('chklist').innerHTML=CHKS.map((item,i)=>`<label class="chk-item"><input type="checkbox" id="ck${i}"><label for="ck${i}">${item}</label></label>`).join('');
+}
+
+function rStats(st){
+  document.getElementById('stCards').innerHTML=[sc('WIN RATE',st.wr+'%',`${st.ws.length}K / ${st.ls.length}K`,st.wr>=60?'var(--green)':'var(--red)'),sc('AVG R:R',st.ar,'≥ 2.0',+st.ar>=2?'var(--acid)':'var(--yellow)'),sc('AVG KAZANÇ','+'+st.aw+'₺','kazanan','var(--green)'),sc('AVG KAYIP',st.al+'₺','kaybeden','var(--red)')].join('');
+  const md=gmd();setTimeout(()=>bChart('cMoBig','bar',md.labels,md.data),50);
+  const start=25000,cur=start+st.tp,tgt=250000,pct=Math.min(100,Math.max(0,((cur-start)/(tgt-start))*100));
+  document.getElementById('tInfo').innerHTML=`<div><div class="eq-val" style="color:var(--muted)">25.000₺</div><div class="eq-lbl">BAŞLANGIÇ</div></div><div><div class="eq-val" style="color:var(--acid)">${cur.toLocaleString('tr-TR')}₺</div><div class="eq-lbl">GÜNCEL</div></div><div><div class="eq-val" style="color:var(--muted)">250.000₺</div><div class="eq-lbl">HEDEF</div></div>`;
+  document.getElementById('tFill').style.width=Math.max(1,pct)+'%';
+  document.getElementById('tPct').textContent='%'+pct.toFixed(1)+' tamamlandı';
+  const ep=geq();setTimeout(()=>bEq('cEqBig',ep),50);
+  const sm={};st.cl.forEach(t=>{if(!sm[t.symbol])sm[t.symbol]={c:0,w:0,pnl:0,rr:0};sm[t.symbol].c++;if(t.pnl>0)sm[t.symbol].w++;sm[t.symbol].pnl+=t.pnl;sm[t.symbol].rr+=t.rr;});
+  document.getElementById('stSym').innerHTML=Object.entries(sm).sort((a,b)=>b[1].pnl-a[1].pnl).map(([s,d])=>{const wr=Math.round((d.w/d.c)*100),ar=(d.rr/d.c).toFixed(1);return`<div class="symrow"><div><div class="symnm">${s}</div><div class="symmeta">${d.c} işlem · %${wr} WR · R:R ${ar}</div></div><div><div class="sympnl" style="color:${pc(d.pnl)}">${fp(d.pnl)}</div><div style="font-size:10px;color:var(--muted);text-align:right">${d.w}K / ${d.c-d.w}K</div></div></div>`;}).join('')||'<div class="empty">Veri yok</div>';
+  const stm={};['OB','Demand Zone','Supply Zone','BOS+OB','CHoCH','FVG','Trend Takibi','Diğer'].forEach(s=>{const x=st.cl.filter(t=>t.setup===s);if(x.length)stm[s]={c:x.length,w:x.filter(t=>t.pnl>0).length,pnl:x.reduce((a,b)=>a+b.pnl,0)};});
+  document.getElementById('stSetup').innerHTML=Object.entries(stm).map(([s,d])=>{const wr=Math.round((d.w/d.c)*100);return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">${s}</span><span style="font-size:10px;color:var(--muted)">${d.c} işlem · ${fp(d.pnl)} · %${wr}</span></div><div class="prog"><div class="progf" style="width:${wr}%;background:${wr>=60?'var(--green)':'var(--yellow)'}"></div></div></div>`;}).join('')||'<div class="empty">Veri yok</div>';
+  const pm={};['Sakin','Aceleci','Korkmuş','Aşırı Güvenli','Kararsız'].forEach(p=>{const pt=st.cl.filter(t=>t.psychology===p);if(pt.length)pm[p]={c:pt.length,w:pt.filter(t=>t.pnl>0).length};});
+  document.getElementById('stPsych').innerHTML=Object.entries(pm).map(([p,d])=>{const wr=Math.round((d.w/d.c)*100);return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">${p}</span><span style="font-size:10px;color:var(--muted)">${d.c} işlem · %${wr} WR</span></div><div class="prog"><div class="progf" style="width:${wr}%;background:${wr>=60?'var(--green)':'var(--red)'}"></div></div></div>`;}).join('')||'<div class="empty">Veri yok</div>';
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────
+function go(t){
+  tab=t;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  const lbl={dashboard:'Dashboard',bist30:'BIST30',journal:'Journal',watchlist:'Watchlist',review:'Review',stats:'İstatistik'};
+  document.querySelectorAll('.nav-btn').forEach(b=>{if(b.textContent===lbl[t])b.classList.add('active');});
+  if(t==='bist30'&&!bist30FetchDone){renderBIST30Skeleton();fetchBIST30();}
+  render();
+}
+function toggleForm(){const f=document.getElementById('tradeForm');f.style.display=f.style.display==='none'?'block':'none';if(f.style.display==='block')document.getElementById('f-date').value=new Date().toISOString().split('T')[0];}
+function saveTrade(){
+  const sym=document.getElementById('f-symbol').value.trim().toUpperCase();if(!sym){alert('Sembol girin');return;}
+  trades.unshift({id:Date.now(),symbol:sym,direction:document.getElementById('f-dir').value,date:document.getElementById('f-date').value,entry:+document.getElementById('f-entry').value||0,stop:+document.getElementById('f-stop').value||0,tp:+document.getElementById('f-tp').value||0,pnl:+document.getElementById('f-pnl').value||0,rr:+document.getElementById('f-rr').value||0,status:document.getElementById('f-status').value,setup:document.getElementById('f-setup').value,confluences:+document.getElementById('f-conf').value||2,psychology:document.getElementById('f-psych').value,ruleBreak:document.getElementById('f-rule').checked,notes:document.getElementById('f-notes').value.trim()});
+  sv(trades);toggleForm();['f-symbol','f-entry','f-stop','f-tp','f-pnl','f-rr','f-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-rule').checked=false;render();
+}
+function delTrade(id){if(!confirm('Sil?'))return;trades=trades.filter(t=>t.id!==id);sv(trades);render();}
+function toggleWatchForm(){const f=document.getElementById('watchForm');f.style.display=f.style.display==='none'?'block':'none';}
+function saveWatch(){
+  const sym=document.getElementById('w-symbol').value.trim().toUpperCase();if(!sym){alert('Sembol girin');return;}
+  watchlist.unshift({id:Date.now(),symbol:sym,note:document.getElementById('w-note').value.trim(),zoneMin:+document.getElementById('w-min').value||0,zoneMax:+document.getElementById('w-max').value||0,currentPrice:+document.getElementById('w-price').value||0,change:null,lastUpdated:null});
+  sw(watchlist);toggleWatchForm();['w-symbol','w-note','w-min','w-max','w-price'].forEach(id=>document.getElementById(id).value='');render();
+}
+function delWatch(id){if(!confirm('Listeden çıkar?'))return;watchlist=watchlist.filter(w=>w.id!==id);sw(watchlist);render();}
+function updPrice(id,val){const p=parseFloat(val);if(isNaN(p))return;watchlist=watchlist.map(w=>w.id===id?{...w,currentPrice:p,lastUpdated:'Manuel'}:w);sw(watchlist);checkAlerts();if(tab==='watchlist')rWatch();}
+function exportCSV(){
+  const h=['Sembol','Tarih','Yön','Setup','Giriş','Stop','TP','P&L','R:R','Psikoloji','Durum','Kural İhlali','Notlar'];
+  const rows=trades.map(t=>[t.symbol,t.date,t.direction,t.setup,t.entry,t.stop,t.tp,t.pnl,t.rr,t.psychology,t.status,t.ruleBreak?'Evet':'Hayır',`"${t.notes}"`]);
+  const csv=[h.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='EdgeLog_'+new Date().toISOString().split('T')[0]+'.csv';a.click();URL.revokeObjectURL(url);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+render();
+setTimeout(()=>fetchWatchlistPrices(),2000);
+setInterval(fetchWatchlistPrices,5*60*1000);
+</script>
+</body>
+</html>
